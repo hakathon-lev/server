@@ -182,7 +182,7 @@ def findSuggestions(medical_case):
             suggestions[key]=suggestion1[key]+suggestion2[key]
         else:
             suggestions[key]=suggestion2[key]
-    print(suggestions)
+    return(suggestions)
 
 findSuggestions(case_data)
 def testInsert():
