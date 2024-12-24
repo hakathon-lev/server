@@ -104,7 +104,41 @@ def searchSimilar(current_case):
     except Exception as e:
         return f"error {str(e)}"
 
+def missingTreatmentsByProtocol(medical_case):
+    with open("protocol.json", "r", encoding="utf-8") as file:
+        protocols = json.load(file)
 
+    diagnosis_code = medical_case.get("פירוט המקרה").get("קוד אירוע")
+    
+    if diagnosis_code not in protocols:
+        raise ValueError(f"Diagnosis code {diagnosis_code} not found in protocols.")
+    
+    protocol = protocols[diagnosis_code]
+    
+    # Extract protocol recommendations
+    required_tests = set(protocol.get("בדיקות", []))
+    required_treatments = set(protocol.get("טיפולים", []))
+    required_medications = set(protocol.get("תרופות", []))
+    
+    given_tests = [list(item.keys()) for item in medical_case.get("מדדים", [])]
+    given_tests=set([item for sublist in given_tests for item in sublist]) #flatten list
+    print(given_tests)
+    given_treatments = [item["טיפול שניתן"] for item in medical_case.get("טיפולים", [])]
+    given_treatments=set([item for sublist in given_treatments for item in sublist]) #flatten list
+    given_medications = [item["טיפול תרופתי"] for item in medical_case.get("תרופה", [])]
+    given_medications=set([item for sublist in given_medications for item in sublist]) #flatten list
+    
+    # Determine missing items
+    missing_tests = list(required_tests - given_tests)
+    missing_treatments = list(required_treatments - given_treatments)
+    missing_medications = list(required_medications - given_medications)
+    
+    print( {
+        "missing_tests": missing_tests,
+        "missing_treatments": missing_treatments,
+        "missing_medications": missing_medications
+    })
+    
 
 @app.route('/signin', methods=['POST'])
 def sign_in():
