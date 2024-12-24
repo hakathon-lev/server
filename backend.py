@@ -140,6 +140,7 @@ def analyze():
 client = MongoClient("mongodb+srv://robin:VkplmHD1loRCTahp@cluster0.it781.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["medical_database"]
 patient_collection = db["cases"]
+users_collection = db["users"]
 
 def generate_json(data):
     case_metadata = {
@@ -221,7 +222,24 @@ def search_similar():
         print(f"Error during /search_similar: {e}")
         return jsonify({"error": str(e)}), 500
 
-
-
+@app.route('/signin', methods=['POST'])
+def sign_in():
+    try:
+        data = request.json  # Extract JSON data from the request body
+        username = data.get("username")
+        password = data.get("password")
+        query = {
+            "username": username,
+            "password": password
+        }
+        # Validate credentials (example logic)
+        user_exists = users_collection.count_documents(query)
+        if user_exists:
+            return jsonify({"message": "Sign-in successful!"}), 200
+        else:
+            return jsonify({"error": "Invalid credentials"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

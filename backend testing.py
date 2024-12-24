@@ -1,5 +1,6 @@
 from backend import app
-import pytest
+from pymongo import MongoClient
+import json
 import requests
 url = "http://127.0.0.1:5000/"
 case_data = {
@@ -88,5 +89,20 @@ def testSearch():
     print(response.status_code)
     print(response.json())
 
-    
-testSearch()
+def testSignin():
+    user={
+        "username": "yosihefez",
+        "password": "peepeepoopoo"
+    }
+    response = requests.post(url+"signin", json=user)
+    print(response.status_code)
+    print(response.json())
+    user={
+        "username": "yosihefez",
+        "password": "wrongpassword"
+    }
+    response = requests.post(url+"signin", json=user)
+    print(response.status_code)
+    print(response.json())
+testSignin()
+
