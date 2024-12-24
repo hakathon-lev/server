@@ -34,7 +34,7 @@ case_data = {
             "רקע רפואי": "סוכרת",
             "רגישויות": "אבקנים",
             "תרופות קבועות": "אספירין",
-            "קוד אירוע": "10"
+            "קוד אירוע": "229"
         },
         "מדדים": [
             {
@@ -85,26 +85,21 @@ case_data = {
 def searchSimilar(current_case):
     client = MongoClient("mongodb+srv://robin:VkplmHD1loRCTahp@cluster0.it781.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
     db = client["medical_database"]
-    collection = db["cases"]
+    collection = db["medical_cases"]
     try:
         query = {
-            "פירוט המקרה.קוד אירוע": current_case["פירוט המקרה"]["קוד אירוע"],
-            "פרטי המטופל.גיל": {
-                "$gte": current_case["פרטי המטופל"]["גיל"] - 5,
-                "$lte": current_case["פרטי המטופל"]["גיל"] + 5
-                },
+            "פירוט המקרה.קוד אירוע": current_case["פירוט המקרה"]["קוד אירוע"]
         }
 
         # Search for similar cases
         similar_cases = collection.find(query)
-        fuzzy_query={}
 
         cases_list = []
         for case in similar_cases:
             case['_id'] = str(case['_id'])  # Convert ObjectId to string
             cases_list.append(case)
         similar_cases=cases_list   
-
+        print(current_case["פירוט המקרה"]["קוד אירוע"])
         #find treatments and sort by frequency
         treatment_recommendations = {}
         medication_reccomendations ={}
@@ -146,8 +141,7 @@ def missingTreatmentsByProtocol(medical_case):
     diagnosis_code = medical_case.get("פירוט המקרה").get("קוד אירוע")
     
     if diagnosis_code not in protocols:
-        raise ValueError(f"Diagnosis code {diagnosis_code} not found in protocols.")
-    
+        return {}
     protocol = protocols[diagnosis_code]
     
     # Extract protocol recommendations
@@ -157,7 +151,6 @@ def missingTreatmentsByProtocol(medical_case):
     
     given_tests = [list(item.keys()) for item in medical_case.get("מדדים", [])]
     given_tests=set([item for sublist in given_tests for item in sublist]) #flatten list
-    print(given_tests)
     given_treatments = [item["טיפול שניתן"] for item in medical_case.get("טיפולים", [])]
     given_treatments=set([item for sublist in given_treatments for item in sublist]) #flatten list
     given_medications = [item["טיפול תרופתי"] for item in medical_case.get("תרופה", [])]
@@ -178,10 +171,17 @@ def missingTreatmentsByProtocol(medical_case):
 def findSuggestions(medical_case):
     suggestion1=searchSimilar(medical_case)
     suggestion2=missingTreatmentsByProtocol(medical_case)
-    print(suggestion1, suggestion2)
     suggestions={}
     for key in suggestion1:
-        suggestions[key]=suggestion1[key]+suggestion2[key]
+        if key in suggestion2:
+            suggestions[key]=suggestion1[key]+suggestion2[key]
+        else:
+            suggestions[key]=suggestion1[key]
+    for key in suggestion2:
+        if key in suggestion1:
+            suggestions[key]=suggestion1[key]+suggestion2[key]
+        else:
+            suggestions[key]=suggestion2[key]
     print(suggestions)
 
 findSuggestions(case_data)

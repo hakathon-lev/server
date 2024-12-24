@@ -46,10 +46,12 @@ def insert_case():
         return jsonify({"message": "Case inserted successfully", "id": str(result.inserted_id)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+client = MongoClient("mongodb+srv://robin:VkplmHD1loRCTahp@cluster0.it781.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db = client["medical_database"]
+collection = db["medical_cases"]
 def searchSimilar(current_case):
-    client = MongoClient("mongodb+srv://robin:VkplmHD1loRCTahp@cluster0.it781.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-    db = client["medical_database"]
-    collection = db["cases"]
+
     try:
         query = {
             "פירוט המקרה.קוד אירוע": current_case["פירוט המקרה"]["קוד אירוע"],
@@ -61,7 +63,6 @@ def searchSimilar(current_case):
 
         # Search for similar cases
         similar_cases = collection.find(query)
-        fuzzy_query={}
 
         cases_list = []
         for case in similar_cases:
@@ -142,11 +143,19 @@ def missingTreatmentsByProtocol(medical_case):
 def findSuggestions(medical_case):
     suggestion1=searchSimilar(medical_case)
     suggestion2=missingTreatmentsByProtocol(medical_case)
-    print(suggestion1, suggestion2)
     suggestions={}
     for key in suggestion1:
-        suggestions[key]=suggestion1[key]+suggestion2[key]
+        if key in suggestion2:
+            suggestions[key]=suggestion1[key]+suggestion2[key]
+        else:
+            suggestions[key]=suggestion1[key]
+    for key in suggestion2:
+        if key in suggestion1:
+            suggestions[key]=suggestion1[key]+suggestion2[key]
+        else:
+            suggestions[key]=suggestion2[key]
     return(suggestions)
+
 @app.route('/signin', methods=['POST'])
 def sign_in():
     try:
