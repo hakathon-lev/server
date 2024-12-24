@@ -46,7 +46,6 @@ def insert_case():
         return jsonify({"message": "Case inserted successfully", "id": str(result.inserted_id)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
 def searchSimilar(current_case):
     client = MongoClient("mongodb+srv://robin:VkplmHD1loRCTahp@cluster0.it781.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
     db = client["medical_database"]
@@ -133,13 +132,21 @@ def missingTreatmentsByProtocol(medical_case):
     missing_treatments = list(required_treatments - given_treatments)
     missing_medications = list(required_medications - given_medications)
     
-    print( {
-        "missing_tests": missing_tests,
-        "missing_treatments": missing_treatments,
-        "missing_medications": missing_medications
+    return( {
+        "suggested tests": missing_tests,
+        "suggested treatments": missing_treatments,
+        "suggested medication": missing_medications
     })
-    
 
+
+def findSuggestions(medical_case):
+    suggestion1=searchSimilar(medical_case)
+    suggestion2=missingTreatmentsByProtocol(medical_case)
+    print(suggestion1, suggestion2)
+    suggestions={}
+    for key in suggestion1:
+        suggestions[key]=suggestion1[key]+suggestion2[key]
+    return(suggestions)
 @app.route('/signin', methods=['POST'])
 def sign_in():
     try:
