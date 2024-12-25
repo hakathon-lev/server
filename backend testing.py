@@ -34,7 +34,7 @@ case_data = {
             "רקע רפואי": "סוכרת",
             "רגישויות": "אבקנים",
             "תרופות קבועות": "אספירין",
-            "קוד אירוע": "229"
+            "קוד אירוע": "10"
         },
         "מדדים": [
             {
@@ -182,7 +182,7 @@ def findSuggestions(medical_case):
             suggestions[key]=suggestion1[key]+suggestion2[key]
         else:
             suggestions[key]=suggestion2[key]
-    return(suggestions)
+    print(suggestions)
 
 findSuggestions(case_data)
 def testInsert():

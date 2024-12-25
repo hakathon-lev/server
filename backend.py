@@ -4,6 +4,7 @@ import json
 import os
 import base64
 import json
+import ffmpeg
 import numpy as np
 #import soundfile as sf
 from flask import Flask, jsonify, request
@@ -16,10 +17,7 @@ CORS(app)
 
 
 
-client = MongoClient("mongodb+srv://robin:VkplmHD1loRCTahp@cluster0.it781.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-db = client["medical_database"]
-patient_collection = db["cases"]
-users_collection = db["users"]
+
 
 def generate_json(data):
     case_metadata = {
@@ -47,18 +45,11 @@ def insert_case():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-client = MongoClient("mongodb+srv://robin:VkplmHD1loRCTahp@cluster0.it781.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-db = client["medical_database"]
-collection = db["medical_cases"]
 def searchSimilar(current_case):
 
     try:
         query = {
-            "פירוט המקרה.קוד אירוע": current_case["פירוט המקרה"]["קוד אירוע"],
-            "פרטי המטופל.גיל": {
-                "$gte": current_case["פרטי המטופל"]["גיל"] - 5,
-                "$lte": current_case["פרטי המטופל"]["גיל"] + 5
-                },
+            "פירוט המקרה.קוד אירוע": current_case["פירוט המקרה"]["קוד אירוע"]
         }
 
         # Search for similar cases
@@ -175,5 +166,16 @@ def sign_in():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+def convert_to_pcm(file_path, output_sample_rate=44100):
+    # Use ffmpeg to extract PCM raw data
+    process = (
+        ffmpeg.input(file_path)
+        .output('pipe:', format='s16le', acodec='pcm_s16le', ac=1, ar=output_sample_rate)
+        .run(capture_stdout=True, capture_stderr=True)
+    )
+    raw_audio = process[0]  # Captured stdout is the raw audio
+    pcm_data = np.frombuffer(raw_audio, dtype=np.int16)
+    return pcm_data, output_sample_rate
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
